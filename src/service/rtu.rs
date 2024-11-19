@@ -4,10 +4,13 @@
 use std::{
     fmt,
     io::{Error, ErrorKind},
+    pin::Pin,
+    task::Context,
 };
 
+use futures_util::task::noop_waker_ref;
 use futures_util::{sink::SinkExt as _, stream::StreamExt as _};
-use tokio::io::{AsyncRead, AsyncWrite};
+use tokio::io::{AsyncRead, AsyncWrite, ReadBuf};
 use tokio_util::codec::Framed;
 
 use crate::{
@@ -52,6 +55,16 @@ where
         let req_adu = self.next_request_adu(req, disconnect);
         let req_hdr = req_adu.hdr;
 
+        let mut buf_old = [0; 4096];
+        let mut data_old = ReadBuf::new(&mut buf_old);
+        let _ = Pin::new(self.framed.get_mut())
+            .poll_read(&mut Context::from_waker(noop_waker_ref()), &mut data_old)?;
+        let data_old = data_old.filled();
+        if !data_old.is_empty() {
+            log::info!("clear old data: {:02X?}", data_old);
+        }
+        self.framed.write_buffer_mut().clear();
+        self.framed.read_buffer_mut().clear();
         self.framed.send(req_adu).await?;
         let res_adu = self
             .framed
