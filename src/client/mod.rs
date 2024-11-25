@@ -6,6 +6,7 @@
 use std::{
     fmt::Debug,
     io::{Error, ErrorKind},
+    ops::{Deref,DerefMut},
 };
 
 use async_trait::async_trait;
@@ -86,7 +87,7 @@ impl Context {
     /// Disconnect the client
     pub async fn disconnect(&mut self) -> Result<(), Error> {
         // Disconnecting is expected to fail!
-        let res = self.client.call(Request::Disconnect).await;
+        let res = self.call(Request::Disconnect).await;
         match res {
             Ok(_) => unreachable!(),
             Err(err) => match err.kind() {
@@ -94,6 +95,20 @@ impl Context {
                 _ => Err(err),
             },
         }
+    }
+}
+
+impl Deref for Context {
+    type Target = dyn Client;
+
+    fn deref(&self) -> &Self::Target {
+        &*self.client
+    }
+}
+
+impl DerefMut for Context {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut *self.client
     }
 }
 
@@ -112,7 +127,7 @@ impl From<Context> for Box<dyn Client> {
 #[async_trait]
 impl Client for Context {
     async fn call<'a>(&'a mut self, request: Request) -> Result<Response, Error> {
-        self.client.call(request).await
+        self.call(request).await
     }
 }
 
@@ -123,13 +138,13 @@ impl SlaveContext for Context {
 }
 
 #[async_trait]
-impl Reader for Context {
+impl Reader for dyn Client {
     async fn read_coils<'a>(
         &'a mut self,
         addr: Address,
         cnt: Quantity,
     ) -> Result<Vec<Coil>, Error> {
-        let rsp = self.client.call(Request::ReadCoils(addr, cnt)).await?;
+        let rsp = self.call(Request::ReadCoils(addr, cnt)).await?;
 
         if let Response::ReadCoils(mut coils) = rsp {
             debug_assert!(coils.len() >= cnt.into());
@@ -145,9 +160,7 @@ impl Reader for Context {
         addr: Address,
         cnt: Quantity,
     ) -> Result<Vec<Coil>, Error> {
-        let rsp = self
-            .client
-            .call(Request::ReadDiscreteInputs(addr, cnt))
+        let rsp = self.call(Request::ReadDiscreteInputs(addr, cnt))
             .await?;
 
         if let Response::ReadDiscreteInputs(mut coils) = rsp {
@@ -164,9 +177,7 @@ impl Reader for Context {
         addr: Address,
         cnt: Quantity,
     ) -> Result<Vec<Word>, Error> {
-        let rsp = self
-            .client
-            .call(Request::ReadInputRegisters(addr, cnt))
+        let rsp = self.call(Request::ReadInputRegisters(addr, cnt))
             .await?;
 
         if let Response::ReadInputRegisters(rsp) = rsp {
@@ -184,9 +195,7 @@ impl Reader for Context {
         addr: Address,
         cnt: Quantity,
     ) -> Result<Vec<Word>, Error> {
-        let rsp = self
-            .client
-            .call(Request::ReadHoldingRegisters(addr, cnt))
+        let rsp = self.call(Request::ReadHoldingRegisters(addr, cnt))
             .await?;
 
         if let Response::ReadHoldingRegisters(rsp) = rsp {
@@ -206,9 +215,7 @@ impl Reader for Context {
         write_addr: Address,
         write_data: &[Word],
     ) -> Result<Vec<Word>, Error> {
-        let rsp = self
-            .client
-            .call(Request::ReadWriteMultipleRegisters(
+        let rsp = self.call(Request::ReadWriteMultipleRegisters(
                 read_addr,
                 read_cnt,
                 write_addr,
@@ -228,11 +235,9 @@ impl Reader for Context {
 }
 
 #[async_trait]
-impl Writer for Context {
+impl Writer for dyn Client {
     async fn write_single_coil<'a>(&'a mut self, addr: Address, coil: Coil) -> Result<(), Error> {
-        let rsp = self
-            .client
-            .call(Request::WriteSingleCoil(addr, coil))
+        let rsp = self.call(Request::WriteSingleCoil(addr, coil))
             .await?;
 
         if let Response::WriteSingleCoil(rsp_addr, rsp_coil) = rsp {
@@ -251,9 +256,7 @@ impl Writer for Context {
         coils: &[Coil],
     ) -> Result<(), Error> {
         let cnt = coils.len();
-        let rsp = self
-            .client
-            .call(Request::WriteMultipleCoils(addr, coils.to_vec()))
+        let rsp = self.call(Request::WriteMultipleCoils(addr, coils.to_vec()))
             .await?;
 
         if let Response::WriteMultipleCoils(rsp_addr, rsp_cnt) = rsp {
@@ -271,9 +274,7 @@ impl Writer for Context {
         addr: Address,
         data: Word,
     ) -> Result<(), Error> {
-        let rsp = self
-            .client
-            .call(Request::WriteSingleRegister(addr, data))
+        let rsp = self.call(Request::WriteSingleRegister(addr, data))
             .await?;
 
         if let Response::WriteSingleRegister(rsp_addr, rsp_word) = rsp {
@@ -292,9 +293,7 @@ impl Writer for Context {
         data: &[Word],
     ) -> Result<(), Error> {
         let cnt = data.len();
-        let rsp = self
-            .client
-            .call(Request::WriteMultipleRegisters(addr, data.to_vec()))
+        let rsp = self.call(Request::WriteMultipleRegisters(addr, data.to_vec()))
             .await?;
 
         if let Response::WriteMultipleRegisters(rsp_addr, rsp_cnt) = rsp {
@@ -313,9 +312,7 @@ impl Writer for Context {
         and_mask: Word,
         or_mask: Word,
     ) -> Result<(), Error> {
-        let rsp = self
-            .client
-            .call(Request::MaskWriteRegister(address, and_mask, or_mask))
+        let rsp = self.call(Request::MaskWriteRegister(address, and_mask, or_mask))
             .await?;
 
         if let Response::MaskWriteRegister(addr, and, or) = rsp {
