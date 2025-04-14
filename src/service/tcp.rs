@@ -6,7 +6,7 @@ use std::{
     io::{Error, ErrorKind},
     pin::Pin,
     sync::atomic::{AtomicU16, Ordering},
-    task::Context,
+    task::{Context, Poll},
 };
 
 use futures_util::task::noop_waker_ref;
@@ -74,8 +74,11 @@ where
     fn clear_old_data(&mut self) {
         let mut buf_old = [0; 4096];
         let mut data_old = ReadBuf::new(&mut buf_old);
-        let _ = Pin::new(self.framed.get_mut())
-            .poll_read(&mut Context::from_waker(noop_waker_ref()), &mut data_old);
+        if let Poll::Ready(Err(e)) = Pin::new(self.framed.get_mut())
+            .poll_read(&mut Context::from_waker(noop_waker_ref()), &mut data_old)
+        {
+            log::info!("recv old data err: {:?}", e);
+        }
         let data_old = data_old.filled();
         if !data_old.is_empty() {
             log::info!("clear old data: {:02X?}", data_old);
