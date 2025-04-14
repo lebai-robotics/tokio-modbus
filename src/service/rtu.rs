@@ -50,11 +50,7 @@ where
         }
     }
 
-    async fn call(&mut self, req: Request) -> Result<Response, Error> {
-        let disconnect = req == Request::Disconnect;
-        let req_adu = self.next_request_adu(req, disconnect);
-        let req_hdr = req_adu.hdr;
-
+    fn clear_old_data(&mut self) {
         let mut buf_old = [0; 4096];
         let mut data_old = ReadBuf::new(&mut buf_old);
         let _ = Pin::new(self.framed.get_mut())
@@ -65,6 +61,13 @@ where
         }
         self.framed.write_buffer_mut().clear();
         self.framed.read_buffer_mut().clear();
+    }
+    async fn call(&mut self, req: Request) -> Result<Response, Error> {
+        let disconnect = req == Request::Disconnect;
+        let req_adu = self.next_request_adu(req, disconnect);
+        let req_hdr = req_adu.hdr;
+
+        self.clear_old_data();
         self.framed.send(req_adu).await?;
         let res_adu = self
             .framed
