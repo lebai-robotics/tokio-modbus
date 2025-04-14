@@ -58,7 +58,7 @@ where
         let mut buf_old = [0; 4096];
         let mut data_old = ReadBuf::new(&mut buf_old);
         let _ = Pin::new(self.framed.get_mut())
-            .poll_read(&mut Context::from_waker(noop_waker_ref()), &mut data_old)?;
+            .poll_read(&mut Context::from_waker(noop_waker_ref()), &mut data_old);
         let data_old = data_old.filled();
         if !data_old.is_empty() {
             log::info!("clear old data: {:02X?}", data_old);
