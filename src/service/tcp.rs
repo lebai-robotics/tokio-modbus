@@ -72,19 +72,28 @@ where
     }
 
     fn clear_old_data(&mut self) {
+        let tx = self.framed.write_buffer_mut();
+        if !tx.is_empty() {
+            log::info!("clear tx data: {:02X?}", tx);
+            tx.clear();
+        }
+        let rx = self.framed.read_buffer_mut();
+        if !rx.is_empty() {
+            log::info!("clear rx data: {:02X?}", rx);
+            rx.clear();
+        }
+
         let mut buf_old = [0; 4096];
         let mut data_old = ReadBuf::new(&mut buf_old);
         if let Poll::Ready(Err(e)) = Pin::new(self.framed.get_mut())
             .poll_read(&mut Context::from_waker(noop_waker_ref()), &mut data_old)
         {
-            log::info!("recv old data err: {:?}", e);
+            log::warn!("recv old data err: {:?}", e);
         }
         let data_old = data_old.filled();
         if !data_old.is_empty() {
             log::info!("clear old data: {:02X?}", data_old);
         }
-        self.framed.write_buffer_mut().clear();
-        self.framed.read_buffer_mut().clear();
     }
 
     pub(crate) async fn call(&mut self, req: Request) -> Result<Response, Error> {

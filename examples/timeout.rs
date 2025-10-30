@@ -90,6 +90,7 @@ async fn client_context(socket_addr: SocketAddr) {
         )
         .await;
         println!("{:?}", read_reg); // Should success
+        assert!(read_reg.unwrap().is_ok());
 
         let write_mul = tokio::time::timeout(
             Duration::from_millis(200),
@@ -97,6 +98,7 @@ async fn client_context(socket_addr: SocketAddr) {
         )
         .await;
         println!("{:?}", write_mul); // Should timeout
+        assert!(write_mul.is_err());
         tokio::time::sleep(Duration::from_millis(500)).await; // wait finish
 
         let write_sig = tokio::time::timeout(
@@ -105,6 +107,7 @@ async fn client_context(socket_addr: SocketAddr) {
         )
         .await;
         println!("{:?}", write_sig); // Should success
+        assert!(write_sig.unwrap().is_ok());
 
         println!("CLIENT: Done.")
     };
