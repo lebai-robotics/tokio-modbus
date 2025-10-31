@@ -201,6 +201,7 @@ fn configure_tcp(workers: usize, tcp: &Socket) -> io::Result<()> {
 
 #[cfg(windows)]
 #[allow(unused)]
+#[allow(clippy::pedantic)]
 fn configure_tcp(_workers: usize, _tcp: &Socket) -> io::Result<()> {
     Ok(())
 }
