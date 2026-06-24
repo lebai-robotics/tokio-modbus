@@ -2,21 +2,21 @@
 # SPDX-License-Identifier: MIT OR Apache-2.0
 
 [package]
-name = "tokio-modbus"
-description = "Tokio-based Modbus library"
-version = "0.8.1"
 authors = [
-    "slowtec GmbH <post@slowtec.de>",
-    "Markus Kohlhase <markus.kohlhase@slowtec.de>",
+  "slowtec GmbH <post@slowtec.de>",
+  "Markus Kohlhase <markus.kohlhase@slowtec.de>",
 ]
-license = "MIT OR Apache-2.0"
-readme = "README.md"
-keywords = ["fieldbus", "modbus", "hardware", "automation"]
-homepage = "https://github.com/slowtec/tokio-modbus"
-repository = "https://github.com/slowtec/tokio-modbus"
+description = "Tokio-based Modbus library"
 edition = "2021"
-rust-version = "1.65"
+homepage = "https://github.com/slowtec/tokio-modbus"
 include = ["/src", "/CHANGELOG.md", "/README.md", "/LICENSES"]
+keywords = ["fieldbus", "modbus", "hardware", "automation"]
+license = "MIT OR Apache-2.0"
+name = "tokio-modbus"
+readme = "README.md"
+repository = "https://github.com/slowtec/tokio-modbus"
+rust-version = "1.65"
+version = "0.8.1"
 
 [package.metadata.docs.rs]
 all-features = true
@@ -25,57 +25,57 @@ all-features = true
 # <https://users.rust-lang.org/t/psa-please-specify-precise-dependency-versions-in-cargo-toml/71277>
 
 [dependencies]
-async-trait = "0.1.68"
-byteorder = "1.4.3"
-bytes = "1.4.0"
-futures = { version = "0.3.28", optional = true }
-futures-util = { version = "0.3.28", optional = true, default-features = false }
-log = "0.4.17"
-smallvec = { version = "1.10.0", default-features = false }
-socket2 = { version = "0.5.2", optional = true, default-features = false }
-tokio = { version = "1.27.0", default-features = false }
+async-trait = {version = "0.1", default-features = false}
+byteorder = {version = "1", default-features = false, features = ["std"]}
+bytes = {version = "1", default-features = false}
+futures = {version = "0.3", default-features = false, optional = true}
+futures-util = {version = "0.3", default-features = false, optional = true}
+log = {version = "0.4", default-features = false}
+smallvec = {version = "1.10.0", default-features = false}
+socket2 = {version = "0.6.2", default-features = false, optional = true}
+tokio = {version = "1", default-features = false}
 # Disable default-features to exclude unused dependency on libudev
-tokio-serial = { version = "5.4.4", optional = true, default-features = false }
-tokio-util = { version = "0.7.7", default-features = false, features = [
-    "codec",
-] }
+tokio-serial = {version = "5.4.4", default-features = false, optional = true}
+tokio-util = {version = "0.7.7", default-features = false, features = [
+  "codec",
+]}
 
 [dev-dependencies]
 anyhow = "1.0.70"
 env_logger = "0.10.0"
 futures = "0.3.28"
-tokio = { version = "1.27.0", default-features = false, features = [
-    "macros",
-    "rt-multi-thread",
-    "time",
-] }
-tokio-serial = { version = "5.4.4", default-features = false }
-rustls-pemfile = "1.0.2"
-tokio-rustls = "0.24.0"
-pkcs8 = { version = "0.10.2", features = ["encryption", "pem", "std"] }
 pem = "2.0.1"
+pkcs8 = {version = "0.10.2", features = ["encryption", "pem", "std"]}
+rustls-pemfile = "1.0.2"
+tokio = {version = "1.27.0", default-features = false, features = [
+  "macros",
+  "rt-multi-thread",
+  "time",
+]}
+tokio-rustls = "0.24.0"
+tokio-serial = {version = "5.4.4", default-features = false}
 webpki = "0.22.0"
 
 [features]
 default = ["rtu", "tcp", "rtu-server", "tcp-server"]
 rtu = ["futures-util/sink"]
-tcp = ["tokio/net", "futures-util/sink"]
-rtu-sync = ["rtu", "sync", "dep:tokio-serial"]
-tcp-sync = ["tcp", "sync"]
 rtu-server = ["rtu", "server", "tokio/macros", "dep:tokio-serial"]
+rtu-sync = ["rtu", "sync", "dep:tokio-serial"]
+tcp = ["tokio/net", "futures-util/sink"]
 tcp-server = [
-    "tcp",
-    "server",
-    "socket2/all",
-    "tokio/macros",
-    "tokio/rt-multi-thread",
+  "tcp",
+  "server",
+  "socket2/all",
+  "tokio/macros",
+  "tokio/rt-multi-thread",
 ]
+tcp-sync = ["tcp", "sync"]
 # The following features are internal and must not be used in dependencies.
-sync = ["dep:futures", "tokio/time", "tokio/rt"]
 server = ["dep:futures"]
+sync = ["dep:futures", "tokio/time", "tokio/rt"]
 
 [badges]
-maintenance = { status = "actively-developed" }
+maintenance = {status = "actively-developed"}
 
 [[example]]
 name = "rtu-client-sync"
